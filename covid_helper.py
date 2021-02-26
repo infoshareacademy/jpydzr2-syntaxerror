@@ -1,11 +1,12 @@
 import pandas as pd
 import geopandas as gpd
-import requests, glob, zipfile, io
+import requests, glob, zipfile, io, os
 import datetime
 
 # visualization
 import matplotlib.pyplot as plt
 import seaborn as sns
+
 base_color = sns.color_palette()[0]
 
 
@@ -19,24 +20,34 @@ def save_covid_data(path):
 
     # folder where all the files will be  saved
     path = path
+    geo_path = path + '/' + 'geo_data'
+    covid_path = path + '/' + 'covid_data'
+
+    # create a subfolder for geo data
+    if not os.path.exists(geo_path):
+        os.makedirs(geo_path)
 
     # get and extract all geo data
     r = requests.get(mapa_powiatow).content
     z = zipfile.ZipFile(io.BytesIO(r))
-    z.extractall(path)
+    z.extractall(geo_path)
+
+    # create a subfolder for covid data
+    if not os.path.exists(covid_path):
+        os.makedirs(covid_path)
 
     # get and extract all csv from https://www.gov.pl/web/koronawirus/wykaz-zarazen-koronawirusem-sars-cov-2
     r = requests.get(archiwalne).content
     z = zipfile.ZipFile(io.BytesIO(r))
-    z.extractall(path)
+    z.extractall(covid_path)
 
     # list of all csv with covid data
-    all_files = sorted(glob.glob(path + "/*.csv"))
+    all_files = sorted(glob.glob(covid_path + "/*.csv"))
 
     # iterate through all file names and extract dates
     # the first 30 files have utf-8 encoding
     for file in all_files[:30]:
-        file_name = file.replace(path + '/', '')
+        file_name = file.replace(covid_path + '/', '')
 
         # make a date and subtract 1 day (COVID results are from the previous day)
         d = datetime.date(int(file_name[:4]), int(file_name[4:6]), int(file_name[6:8])) - datetime.timedelta(days=1)
@@ -52,7 +63,7 @@ def save_covid_data(path):
 
     # from the 31st files, files have Windows-1250 encoding
     for file in all_files[30:]:
-        file_name = file.replace(path + '/', '')
+        file_name = file.replace(covid_path + '/', '')
 
         # make a date and subtract 1 day (COVID results are from the previous day)
         d = datetime.date(int(file_name[:4]), int(file_name[4:6]), int(file_name[6:8])) - datetime.timedelta(days=1)
@@ -114,3 +125,6 @@ def plot_map(df, path):
     dane_mapa.plot(column='liczba_przypadkow', ax=ax, cmap='YlOrRd', linewidth=0.8, edgecolor='gray')
     ax.axis('off')
     plt.show()
+
+# TODO: download GUS data
+# TODO: calculate the average cases per inhabitants

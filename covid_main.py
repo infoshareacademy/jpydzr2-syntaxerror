@@ -21,18 +21,18 @@ def arg_parser():
 
     # prevents running multiple arguments at the same time
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--save', action='store_true')
-    group.add_argument('--read', action='store_true')
-    group.add_argument('--plot', action='store_true')
-    group.add_argument('--plot_map', action='store_true')
+    group.add_argument('--save', action='store_true', help='Downloads COVID and geo data')
+    group.add_argument('--read', action='store_true', help='Shows first 5 results of COVID dataset')
+    group.add_argument('--plot', action='store_true', help='Plots a line chart per powiat')
+    group.add_argument('--plot_map', action='store_true', help='Plots a map for the last known date')
 
     # optional argument
     parser.add_argument('-s', '--save_path', default='input',
-                        help='Download location for COVID data. Default = input')
+                        help='Provide a location to save all data. Default = input')
     parser.add_argument('-r', '--read_path', default='input',
-                        help='Location of the folder with COVID data. Default = input')
+                        help='Provide a location to read COVID data. Default = input')
     parser.add_argument('-p', '--powiat', default='Cały kraj',
-                        help='Please provide powiat you want to analyze. Default = Cały kraj')
+                        help='Provide powiat you want to analyze. Default = Cały kraj')
 
     # Parse args
     args = parser.parse_args()
@@ -48,17 +48,17 @@ def main():
         print("Data have been saved.")
 
     elif args.read:
-        df = covid_helper.read_covid_data(args.read_path)
+        df = covid_helper.read_covid_data(args.read_path + '/' + 'covid_data')
         print("Data have been loaded. Below is the snippet.")
         print(df.head())
 
     elif args.plot:
-        df = covid_helper.read_covid_data(args.read_path)
+        df = covid_helper.read_covid_data(args.read_path + '/' + 'covid_data')
         covid_helper.plot_chart(df, args.powiat)
 
     elif args.plot_map:
-        df = covid_helper.read_covid_data(args.read_path)
-        covid_helper.plot_map(df, args.read_path)
+        df = covid_helper.read_covid_data(args.read_path + '/' + 'covid_data')
+        covid_helper.plot_map(df, args.read_path + '/' + 'geo_data')
 
     else:
         print('No arguments provided. Please check -h for help.')
