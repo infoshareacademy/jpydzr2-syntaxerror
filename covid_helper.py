@@ -3,7 +3,7 @@ import requests, glob, zipfile, io
 import datetime
 
 
-def download_covid_data(path):
+def save_covid_data(path):
     # link to the archived data per 'powiat'
     # the last day of the archived data is equal to the latest CSV from the actual data
     archiwalne = 'https://arcgis.com/sharing/rest/content/items/e16df1fa98c2452783ec10b0aea4b341/data'
@@ -18,21 +18,7 @@ def download_covid_data(path):
     z.extractall(path)
 
     # iterate through all file names and extract dates
-    for file in all_files[30:]:
-        file_name = file.replace(path + '/', '')
-
-        # make a date and subtract 1 day (COVID results are from the previous day)
-        d = datetime.date(int(file_name[:4]), int(file_name[4:6]), int(file_name[6:8])) - datetime.timedelta(days=1)
-
-        # read each file
-        df = pd.read_csv(file, encoding='Windows-1250', sep=';', header=0)
-
-        # add 'stan rekordu na' if does not exist or overwrite the existing date
-        df['stan_rekordu_na'] = d
-
-        # save as the same file name
-        df.to_csv(file, header=True, encoding='utf-8', sep=';', index=False)
-
+    # the first 30 files have utf-8 encoding
     for file in all_files[:30]:
         file_name = file.replace(path + '/', '')
 
@@ -48,8 +34,24 @@ def download_covid_data(path):
         # save as the same file name
         df.to_csv(file, header=True, encoding='utf-8', sep=';', index=False)
 
+    # from the 31st files, files have Windows-1250 encoding
+    for file in all_files[30:]:
+        file_name = file.replace(path + '/', '')
 
-def load_and_read_csv(path):
+        # make a date and subtract 1 day (COVID results are from the previous day)
+        d = datetime.date(int(file_name[:4]), int(file_name[4:6]), int(file_name[6:8])) - datetime.timedelta(days=1)
+
+        # read each file
+        df = pd.read_csv(file, encoding='Windows-1250', sep=';', header=0)
+
+        # add 'stan rekordu na' if does not exist or overwrite the existing date
+        df['stan_rekordu_na'] = d
+
+        # save as the same file name
+        df.to_csv(file, header=True, encoding='utf-8', sep=';', index=False)
+
+
+def read_covid_data(path):
     path = path
     all_files = sorted(glob.glob(path + "/*.csv"))
 

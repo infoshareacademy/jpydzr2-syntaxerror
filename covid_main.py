@@ -10,22 +10,22 @@ def arg_parser():
     "python3 covid_main.py --save" = saves data in the default location 'COVID_archive'
     "python3 covid_main.py --save -d 'your path'" = saves data in the user specified location
 
-    "python3 covid_main.py --load" = once saved, reads df
-    "python3 covid_main.py --load -l 'your path'" = once saved, reads df from the user specified location
+    "python3 covid_main.py --read" = once saved, reads df
+    "python3 covid_main.py --read -r 'your path'" = once saved, reads df from the user specified location
     """
 
     # define parser
     parser = argparse.ArgumentParser(description="COVID Data Download Settings")
 
-    # prevents running --save and --load at the same time
+    # prevents running --save and --read at the same time if typed manually
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--save', action='store_true')
-    group.add_argument('--load', action='store_true')
+    group.add_argument('--read', action='store_true')
 
     # optional argument
     parser.add_argument('-s', '--save_path', default='COVID_archive',
                         help='Download location for COVID data. Default = COVID_archive')
-    parser.add_argument('-l', '--load_path', default='COVID_archive',
+    parser.add_argument('-r', '--read_path', default='COVID_archive',
                         help='Location of the folder with COVID data. Default = COVID_archive')
 
     # Parse args
@@ -38,19 +38,19 @@ def main():
     args = arg_parser()
 
     if args.save:
-        covid_helper.download_covid_data(args.save_path)
+        covid_helper.save_covid_data(args.save_path)
         print("Data have been saved.")
 
-    elif args.load:
-        df = covid_helper.load_and_read_csv(args.load_path)
+    elif args.read:
+        df = covid_helper.read_covid_data(args.read_path)
         print("Data have been loaded. Below is the snippet.")
         print(df.head())
 
     else:
-        covid_helper.download_covid_data(args.save_path)
+        covid_helper.save_covid_data(args.save_path)
         print("Data have been saved.")
 
-        df = covid_helper.load_and_read_csv(args.load_path)
+        df = covid_helper.read_covid_data(args.read_path)
         print("Data have been loaded. Below is the snippet.")
         print(df.head())
 
