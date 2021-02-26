@@ -10,7 +10,7 @@ def download_covid_data(path):
 
     # folder where all the files will be  saved
     path = path
-    all_files = glob.glob(path + "/*.csv")
+    all_files = sorted(glob.glob(path + "/*.csv"))
 
     # get and extract all csv from https://www.gov.pl/web/koronawirus/wykaz-zarazen-koronawirusem-sars-cov-2
     r = requests.get(archiwalne).content
@@ -18,20 +18,35 @@ def download_covid_data(path):
     z.extractall(path)
 
     # iterate through all file names and extract dates
-    for file in all_files:
+    for file in all_files[30:]:
         file_name = file.replace(path + '/', '')
 
         # make a date and subtract 1 day (COVID results are from the previous day)
         d = datetime.date(int(file_name[:4]), int(file_name[4:6]), int(file_name[6:8])) - datetime.timedelta(days=1)
 
         # read each file
-        df = pd.read_csv(file, encoding='latin1', sep=';', header=0)
+        df = pd.read_csv(file, encoding='Windows-1250', sep=';', header=0)
 
         # add 'stan rekordu na' if does not exist or overwrite the existing date
         df['stan_rekordu_na'] = d
 
         # save as the same file name
-        df.to_csv(file, header=True, sep=';', index=False)
+        df.to_csv(file, header=True, encoding='utf-8', sep=';', index=False)
+
+    for file in all_files[:30]:
+        file_name = file.replace(path + '/', '')
+
+        # make a date and subtract 1 day (COVID results are from the previous day)
+        d = datetime.date(int(file_name[:4]), int(file_name[4:6]), int(file_name[6:8])) - datetime.timedelta(days=1)
+
+        # read each file
+        df = pd.read_csv(file, encoding='utf-8', sep=';', header=0)
+
+        # add 'stan rekordu na' if does not exist or overwrite the existing date
+        df['stan_rekordu_na'] = d
+
+        # save as the same file name
+        df.to_csv(file, header=True, encoding='utf-8', sep=';', index=False)
 
 
 def load_and_read_csv(path):
@@ -39,7 +54,7 @@ def load_and_read_csv(path):
     all_files = sorted(glob.glob(path + "/*.csv"))
 
     # create a list of dataframes, [39:] selects only 2021 data
-    list_of_dfs = [pd.read_csv(file, encoding='latin1', sep=';', header=0) for file in all_files[39:]]
+    list_of_dfs = [pd.read_csv(file, encoding='utf-8', sep=';', header=0) for file in all_files[39:]]
 
     # concatenate all dataframes into one
     main_df = pd.concat(list_of_dfs, axis=0, ignore_index=True, sort=False)
