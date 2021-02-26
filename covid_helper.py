@@ -2,6 +2,14 @@ import pandas as pd
 import requests, glob, zipfile, io
 import datetime
 
+# visualization
+import matplotlib.pyplot as plt
+# %matplotlib inline
+
+import seaborn as sns
+
+base_color = sns.color_palette()[0]
+
 
 def save_covid_data(path):
     # link to the archived data per 'powiat'
@@ -62,3 +70,15 @@ def read_covid_data(path):
     main_df = pd.concat(list_of_dfs, axis=0, ignore_index=True, sort=False)
 
     return main_df
+
+
+def plot_chart(df, powiat):
+    df_copy = df[df['powiat_miasto'] == powiat].copy()
+    df_copy.index = df_copy['stan_rekordu_na']
+    df_copy['liczba_przypadkow_7d_MA'] = df_copy['liczba_przypadkow'].rolling(7).mean()
+
+    plt.title(f'Liczba przypadkow dla {powiat}')
+    df_copy['liczba_przypadkow'].plot(figsize=(16, 8))
+    df_copy['liczba_przypadkow_7d_MA'].plot(figsize=(16, 8))
+    plt.legend()
+    plt.show()
