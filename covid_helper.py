@@ -1,13 +1,11 @@
 import pandas as pd
+import geopandas as gpd
 import requests, glob, zipfile, io
 import datetime
 
 # visualization
 import matplotlib.pyplot as plt
-# %matplotlib inline
-
 import seaborn as sns
-
 base_color = sns.color_palette()[0]
 
 
@@ -16,14 +14,24 @@ def save_covid_data(path):
     # the last day of the archived data is equal to the latest CSV from the actual data
     archiwalne = 'https://arcgis.com/sharing/rest/content/items/e16df1fa98c2452783ec10b0aea4b341/data'
 
+    # link to the geo locations of powiat
+    mapa_powiatow = 'https://www.gis-support.pl/downloads/Powiaty.zip'
+
     # folder where all the files will be  saved
     path = path
-    all_files = sorted(glob.glob(path + "/*.csv"))
+
+    # get and extract all geo data
+    r = requests.get(mapa_powiatow).content
+    z = zipfile.ZipFile(io.BytesIO(r))
+    z.extractall(path)
 
     # get and extract all csv from https://www.gov.pl/web/koronawirus/wykaz-zarazen-koronawirusem-sars-cov-2
     r = requests.get(archiwalne).content
     z = zipfile.ZipFile(io.BytesIO(r))
     z.extractall(path)
+
+    # list of all csv with covid data
+    all_files = sorted(glob.glob(path + "/*.csv"))
 
     # iterate through all file names and extract dates
     # the first 30 files have utf-8 encoding
@@ -69,6 +77,10 @@ def read_covid_data(path):
     # concatenate all dataframes into one
     main_df = pd.concat(list_of_dfs, axis=0, ignore_index=True, sort=False)
 
+    # remove 't' from teryt code and add 0 for teryt with 3 digits
+    main_df['teryt'] = main_df['teryt'].str.replace('t', '')
+    main_df['teryt'] = main_df['teryt'].apply(lambda x: '0' + str(x) if len(str(x)) < 4 else str(x))
+
     return main_df
 
 
@@ -81,4 +93,24 @@ def plot_chart(df, powiat):
     df_copy['liczba_przypadkow'].plot(figsize=(16, 8))
     df_copy['liczba_przypadkow_7d_MA'].plot(figsize=(16, 8))
     plt.legend()
+    plt.show()
+
+
+def plot_map(df, path):
+    # read goe data
+    map_df = gpd.read_file(path + '/Powiaty.shp')
+
+    # show only the latest results
+    last_result = df.stan_rekordu_na.max()
+    df_last_results = df[df.stan_rekordu_na == last_result][['teryt', 'liczba_przypadkow', 'stan_rekordu_na']]
+
+    # join datasets
+    dane_mapa = pd.merge(map_df, df_last_results, how='left', left_on='JPT_KOD_JE', right_on='teryt')
+    dane_mapa = dane_mapa.to_crs(epsg=2180)
+
+    # plot the map
+    fig, ax = plt.subplots(1, figsize=(10, 10))
+    plt.title(f'Liczba przypadkow na {last_result}', fontsize=16, fontweight='bold')
+    dane_mapa.plot(column='liczba_przypadkow', ax=ax, cmap='YlOrRd', linewidth=0.8, edgecolor='gray')
+    ax.axis('off')
     plt.show()

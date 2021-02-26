@@ -1,13 +1,12 @@
 import argparse
 import covid_helper
-import pandas
 
 
 def arg_parser():
     """In a console:
-    "python3 covid_main.py" = saves data in the default location 'COVID_archive' and reads df
+    "python3 covid_main.py" = saves data in the default location 'input' and reads df
 
-    "python3 covid_main.py --save" = saves data in the default location 'COVID_archive'
+    "python3 covid_main.py --save" = saves data in the default location 'input'
     "python3 covid_main.py --save -d 'your path'" = saves data in the user specified location
 
     "python3 covid_main.py --read" = once saved, reads df
@@ -25,12 +24,13 @@ def arg_parser():
     group.add_argument('--save', action='store_true')
     group.add_argument('--read', action='store_true')
     group.add_argument('--plot', action='store_true')
+    group.add_argument('--plot_map', action='store_true')
 
     # optional argument
-    parser.add_argument('-s', '--save_path', default='COVID_archive',
-                        help='Download location for COVID data. Default = COVID_archive')
-    parser.add_argument('-r', '--read_path', default='COVID_archive',
-                        help='Location of the folder with COVID data. Default = COVID_archive')
+    parser.add_argument('-s', '--save_path', default='input',
+                        help='Download location for COVID data. Default = input')
+    parser.add_argument('-r', '--read_path', default='input',
+                        help='Location of the folder with COVID data. Default = input')
     parser.add_argument('-p', '--powiat', default='Cały kraj',
                         help='Please provide powiat you want to analyze. Default = Cały kraj')
 
@@ -55,6 +55,10 @@ def main():
     elif args.plot:
         df = covid_helper.read_covid_data(args.read_path)
         covid_helper.plot_chart(df, args.powiat)
+
+    elif args.plot_map:
+        df = covid_helper.read_covid_data(args.read_path)
+        covid_helper.plot_map(df, args.read_path)
 
     else:
         print('No arguments provided. Please check -h for help.')
