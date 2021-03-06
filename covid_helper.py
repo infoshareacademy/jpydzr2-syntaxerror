@@ -16,11 +16,14 @@ class RequestData:
         self.year = year
         self.filename = filename
 
+def _get_total_records(url):
+    request = requests.get(url)
+    data = request.json()
+    return data['totalRecords']
+
 def _get_gus_data_from_all_pages(url: str):
 
-    req = requests.get(url)
-    data = req.json()
-    total_records = data['totalRecords']
+    total_records = _get_total_records(url)
 
     max_records_per_page = 100
     pages = int(total_records / max_records_per_page)
