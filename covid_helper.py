@@ -9,6 +9,60 @@ import seaborn as sns
 
 base_color = sns.color_palette()[0]
 
+class RequestData:
+    def __init__(self, id: int, description: str, year: int, filename: str)->None:
+        self.id = id
+        self.description = description
+        self.year = year
+        self.filename = filename
+
+def _get_total_records(url):
+    request = requests.get(url)
+    data = request.json()
+    return data['totalRecords']
+
+def _get_gus_data_from_all_pages(url: str):
+
+    total_records = _get_total_records(url)
+
+    max_records_per_page = 100
+    pages = int(total_records / max_records_per_page)
+    GUS_data = {}
+
+    for page in range(0, pages + 1):
+        url_pages = url + f'&page={page}&page-size=100'
+        req = requests.get(url_pages, headers={'X-ClientId': '38dfdca8-de37-41fc-44ab-08d8830c4874'})
+        data = req.json()
+
+        for elem in data['results']:
+            GUS_data[elem['id']] = [elem['name'], elem['values'][0]['val']]
+
+    return GUS_data
+
+def save_GUS_data(path):
+    gus_output_path = path + '/' + 'gus_data'
+
+    if not os.path.exists(gus_output_path):
+        os.makedirs(gus_output_path)
+
+    gus_variables= [
+        RequestData(72305, 'liczba mieszkancow', 2019, 'Mieszkancy'),
+        RequestData(746289, 'mediana wieku ludnosci', 2019, 'Mediana'),
+        RequestData(1601437, 'liczba boisk futbolowych', 2018, 'Boiska'),
+        RequestData(1241, 'liczba muzeow', 2019, 'Muzea'),
+        RequestData(64428, 'przecietne wynagrodzenie brutto', 2019, 'Wynagrodzenie')
+    ]
+
+    unit_level = 5  # poziom agregacji 5 - powiaty
+
+    for gus_variable in gus_variables:
+
+        url = f'https://bdl.stat.gov.pl/api/v1/data/by-variable/{gus_variable.id}?unit-level={unit_level}&year={gus_variable.year}'
+
+        GUS_data = _get_gus_data_from_all_pages(url)
+
+        df_GUS_data = pd.DataFrame(data=GUS_data, index=['Location', gus_variable.description]).transpose()
+        df_GUS_data.to_csv(gus_output_path + '/' + gus_variable.filename)
 
 def save_covid_data(path):
     # link to the archived data per 'powiat'
