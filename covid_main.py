@@ -45,6 +45,7 @@ def main():
 
     if args.save:
         covid_helper.save_covid_data(args.save_path)
+        covid_helper.save_GUS_data(args.save_path)
         print("Data have been saved.")
 
     elif args.read:
