@@ -16,7 +16,11 @@ class RequestData:
         self.year = year
         self.filename = filename
 
-def _get_gus_data_from_all_pages(url: str, total_records: int):
+def _get_gus_data_from_all_pages(url: str):
+
+    req = requests.get(url)
+    data = req.json()
+    total_records = data['totalRecords']
 
     max_records_per_page = 100
     pages = int(total_records / max_records_per_page)
@@ -33,10 +37,10 @@ def _get_gus_data_from_all_pages(url: str, total_records: int):
     return GUS_data
 
 def save_GUS_data(path):
-    gus_path = path + '/' + 'gus_data'
+    gus_output_path = path + '/' + 'gus_data'
 
-    if not os.path.exists(gus_path):
-        os.makedirs(gus_path)
+    if not os.path.exists(gus_output_path):
+        os.makedirs(gus_output_path)
 
     gus_variables= [
         RequestData(72305, 'liczba mieszkancow', 2019, 'Mieszkancy'),
@@ -51,14 +55,11 @@ def save_GUS_data(path):
     for gus_variable in gus_variables:
 
         url = f'https://bdl.stat.gov.pl/api/v1/data/by-variable/{gus_variable.id}?unit-level={unit_level}&year={gus_variable.year}'
-        req = requests.get(url)
-        data = req.json()
-        total_records = data['totalRecords']
 
-        GUS_data = _get_gus_data_from_all_pages(url, total_records)
+        GUS_data = _get_gus_data_from_all_pages(url)
 
         df_GUS_data = pd.DataFrame(data=GUS_data, index=['Location', gus_variable.description]).transpose()
-        df_GUS_data.to_csv(gus_path + '/' + gus_variable.filename)
+        df_GUS_data.to_csv(gus_output_path + '/' + gus_variable.filename)
 
 def save_covid_data(path):
     # link to the archived data per 'powiat'
