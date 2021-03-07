@@ -2,6 +2,7 @@ import pandas as pd
 import geopandas as gpd
 import requests, glob, zipfile, io, os
 import datetime
+from pathlib import Path
 
 # visualization
 import matplotlib.pyplot as plt
@@ -101,9 +102,10 @@ def save_covid_data(path):
     # iterate through all file names and extract dates
     # the first 30 files have utf-8 encoding
     for file in all_files[:30]:
-        file_name = file.replace(covid_path + '/', '')
+        file_name = Path(file).name
 
         # make a date and subtract 1 day (COVID results are from the previous day)
+        # breakpoint()
         d = datetime.date(int(file_name[:4]), int(file_name[4:6]), int(file_name[6:8])) - datetime.timedelta(days=1)
 
         # read each file
@@ -117,7 +119,7 @@ def save_covid_data(path):
 
     # from the 31st files, files have Windows-1250 encoding
     for file in all_files[30:]:
-        file_name = file.replace(covid_path + '/', '')
+        file_name = Path(file).name
 
         # make a date and subtract 1 day (COVID results are from the previous day)
         d = datetime.date(int(file_name[:4]), int(file_name[4:6]), int(file_name[6:8])) - datetime.timedelta(days=1)
@@ -179,6 +181,3 @@ def plot_map(df, path):
     dane_mapa.plot(column='liczba_przypadkow', ax=ax, cmap='YlOrRd', linewidth=0.8, edgecolor='gray')
     ax.axis('off')
     plt.show()
-
-# TODO: download GUS data
-# TODO: calculate the average cases per inhabitants
