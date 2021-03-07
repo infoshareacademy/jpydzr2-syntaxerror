@@ -3,6 +3,7 @@ import geopandas as gpd
 import requests, glob, zipfile, io, os
 import datetime
 from pathlib import Path
+import numpy as np
 
 # visualization
 import matplotlib.pyplot as plt
@@ -177,8 +178,8 @@ def plot_map(df, path):
     plt.show()
 
 def merge_data():
-    df_COVID = read_covid_data(args.read_path + '/' + 'covid_data')
-    df_GUS = pd.read_csv(args.read_path + '/' + 'gus_data' + '/' + 'Wynagrodzenie')
+    df_COVID = read_covid_data('/' + 'covid_data')
+    df_GUS = pd.read_csv('/' + 'gus_data' + '/' + 'Wynagrodzenie')
 
     df_GUS['Location'] = df_GUS['Location'].apply(lambda x: x.lower().split()[-1])
     df_GUS['Location'] = df_GUS['Location'].apply(lambda x: x.split('.')[-1])
