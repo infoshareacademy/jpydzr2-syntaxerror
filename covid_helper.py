@@ -10,20 +10,22 @@ import seaborn as sns
 
 base_color = sns.color_palette()[0]
 
+
 class RequestData:
-    def __init__(self, id: int, description: str, year: int, filename: str)->None:
+    def __init__(self, id: int, description: str, year: int, filename: str) -> None:
         self.id = id
         self.description = description
         self.year = year
         self.filename = filename
+
 
 def _get_total_records(url):
     request = requests.get(url)
     data = request.json()
     return data['totalRecords']
 
-def _get_gus_data_from_all_pages(url: str):
 
+def _get_gus_data_from_all_pages(url: str):
     total_records = _get_total_records(url)
 
     max_records_per_page = 100
@@ -40,13 +42,14 @@ def _get_gus_data_from_all_pages(url: str):
 
     return GUS_data
 
+
 def save_GUS_data(path):
     gus_output_path = path + '/' + 'gus_data'
 
     if not os.path.exists(gus_output_path):
         os.makedirs(gus_output_path)
 
-    gus_variables= [
+    gus_variables = [
         RequestData(72305, 'liczba mieszkancow', 2019, 'Mieszkancy'),
         RequestData(746289, 'mediana wieku ludnosci', 2019, 'Mediana'),
         RequestData(1601437, 'liczba boisk futbolowych', 2018, 'Boiska'),
@@ -57,13 +60,31 @@ def save_GUS_data(path):
     unit_level = 5  # poziom agregacji 5 - powiaty
 
     for gus_variable in gus_variables:
-
         url = f'https://bdl.stat.gov.pl/api/v1/data/by-variable/{gus_variable.id}?unit-level={unit_level}&year={gus_variable.year}'
 
         GUS_data = _get_gus_data_from_all_pages(url)
 
         df_GUS_data = pd.DataFrame(data=GUS_data, index=['Location', gus_variable.description]).transpose()
         df_GUS_data.to_csv(gus_output_path + '/' + gus_variable.filename)
+
+
+def fix_encoding(all_files, start_file_idx=None, end_file_idx=None, encoding='utf-8'):
+    for file in all_files[start_file_idx:end_file_idx]:
+        file_name = Path(file).name
+
+        # make a date and subtract 1 day (COVID results are from the previous day)
+        # breakpoint()
+        d = datetime.date(int(file_name[:4]), int(file_name[4:6]), int(file_name[6:8])) - datetime.timedelta(days=1)
+
+        # read each file
+        df = pd.read_csv(file, encoding=encoding, sep=';', header=0)
+
+        # add 'stan rekordu na' if does not exist or overwrite the existing date
+        df['stan_rekordu_na'] = d
+
+        # save as the same file name
+        df.to_csv(file, header=True, encoding='utf-8', sep=';', index=False)
+
 
 def save_covid_data(path):
     # link to the archived data per 'powiat'
@@ -101,37 +122,10 @@ def save_covid_data(path):
 
     # iterate through all file names and extract dates
     # the first 30 files have utf-8 encoding
-    for file in all_files[:30]:
-        file_name = Path(file).name
-
-        # make a date and subtract 1 day (COVID results are from the previous day)
-        # breakpoint()
-        d = datetime.date(int(file_name[:4]), int(file_name[4:6]), int(file_name[6:8])) - datetime.timedelta(days=1)
-
-        # read each file
-        df = pd.read_csv(file, encoding='utf-8', sep=';', header=0)
-
-        # add 'stan rekordu na' if does not exist or overwrite the existing date
-        df['stan_rekordu_na'] = d
-
-        # save as the same file name
-        df.to_csv(file, header=True, encoding='utf-8', sep=';', index=False)
+    fix_encoding(all_files, end_file_idx=30, encoding='utf-8')
 
     # from the 31st files, files have Windows-1250 encoding
-    for file in all_files[30:]:
-        file_name = Path(file).name
-
-        # make a date and subtract 1 day (COVID results are from the previous day)
-        d = datetime.date(int(file_name[:4]), int(file_name[4:6]), int(file_name[6:8])) - datetime.timedelta(days=1)
-
-        # read each file
-        df = pd.read_csv(file, encoding='Windows-1250', sep=';', header=0)
-
-        # add 'stan rekordu na' if does not exist or overwrite the existing date
-        df['stan_rekordu_na'] = d
-
-        # save as the same file name
-        df.to_csv(file, header=True, encoding='utf-8', sep=';', index=False)
+    fix_encoding(all_files, start_file_idx=30, encoding='Windows-1250')
 
 
 def read_covid_data(path):
