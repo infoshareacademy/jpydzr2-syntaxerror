@@ -69,6 +69,23 @@ def save_GUS_data(path):
         df_GUS_data.to_csv(gus_output_path + '/' + gus_variable.filename)
 
 
+def save_gis_data(path):
+    # link to the geo locations of powiat
+    mapa_powiatow = 'https://www.gis-support.pl/downloads/Powiaty.zip'
+
+    # folder where all the files will be  saved
+    geo_path = path + '/' + 'geo_data'
+
+    # create a subfolder for geo data
+    if not os.path.exists(geo_path):
+        os.makedirs(geo_path)
+
+    # get and extract all geo data
+    r = requests.get(mapa_powiatow).content
+    z = zipfile.ZipFile(io.BytesIO(r))
+    z.extractall(geo_path)
+
+
 def fix_encoding(all_files, start_file_idx=None, end_file_idx=None, encoding='utf-8'):
     for file in all_files[start_file_idx:end_file_idx]:
         file_name = Path(file).name
@@ -92,22 +109,8 @@ def save_covid_data(path):
     # the last day of the archived data is equal to the latest CSV from the actual data
     archiwalne = 'https://arcgis.com/sharing/rest/content/items/e16df1fa98c2452783ec10b0aea4b341/data'
 
-    # link to the geo locations of powiat
-    mapa_powiatow = 'https://www.gis-support.pl/downloads/Powiaty.zip'
-
     # folder where all the files will be  saved
-    path = path
-    geo_path = path + '/' + 'geo_data'
     covid_path = path + '/' + 'covid_data'
-
-    # create a subfolder for geo data
-    if not os.path.exists(geo_path):
-        os.makedirs(geo_path)
-
-    # get and extract all geo data
-    r = requests.get(mapa_powiatow).content
-    z = zipfile.ZipFile(io.BytesIO(r))
-    z.extractall(geo_path)
 
     # create a subfolder for covid data
     if not os.path.exists(covid_path):
@@ -127,6 +130,42 @@ def save_covid_data(path):
 
     # from the 31st files, files have Windows-1250 encoding
     fix_encoding(all_files, start_file_idx=30, encoding='Windows-1250')
+
+
+def update_covid_data(path):
+    aktualne = 'https://www.arcgis.com/sharing/rest/content/items/6ff45d6b5b224632a672e764e04e8394/data'
+
+    covid_path = path + '/' + 'covid_data'
+    all_files = sorted(glob.glob(covid_path + "/*.csv"))
+
+    # read csv
+    df = pd.read_csv(aktualne, encoding='Windows-1250', sep=';', header=0)
+
+    # change the datatype to datetime (for timedelta)
+    df['stan_rekordu_na'] = df['stan_rekordu_na'].astype('datetime64[s]')
+
+    # get the date from the file (data from the previous day!)
+    max_date = df['stan_rekordu_na'].max()
+
+    # adapt the time format to the one used in the file names
+    yesterday = max_date.strftime("%Y%m%d")
+
+    # get the date for the file name (the report date!)
+    today = max_date + datetime.timedelta(days=1)
+
+    # adapt the time format to the one used in the file names
+    today = today.strftime("%Y%m%d")
+
+    # path and file name to be saved
+    path_to_save = covid_path + '/' + today + '074502_rap_rcb_pow_eksport.csv'
+
+    # check if the yesterday file is among all files (check only the date, not the entire file name)
+    if yesterday in [Path(file).name[:8] for file in all_files]:
+        # if yes --> save the csv in the folder
+        df.to_csv(path_to_save, header=True, encoding='utf-8', sep=';', index=False)
+    else:
+        # if no --> download the entire zip file
+        save_covid_data(path)
 
 
 def read_covid_data(path):
@@ -177,6 +216,7 @@ def plot_map(df, path):
     ax.axis('off')
     plt.show()
 
+
 def merge_data():
     df_COVID = read_covid_data('/' + 'covid_data')
     df_GUS = pd.read_csv('/' + 'gus_data' + '/' + 'Wynagrodzenie')
@@ -185,9 +225,10 @@ def merge_data():
     df_GUS['Location'] = df_GUS['Location'].apply(lambda x: x.split('.')[-1])
 
     df_COVID['powiat_miasto'] = df_COVID['powiat_miasto'].apply(lambda x: x.lower())
-    #print(df_COVID.info())
-    df_COVID['liczba_na_10_tys_mieszkancow'] = df_COVID['liczba_na_10_tys_mieszkancow'].apply(lambda x: float(str(x).replace(',','.')))
-    #print(df_COVID.info())
+    # print(df_COVID.info())
+    df_COVID['liczba_na_10_tys_mieszkancow'] = df_COVID['liczba_na_10_tys_mieszkancow'].apply(
+        lambda x: float(str(x).replace(',', '.')))
+    # print(df_COVID.info())
     df_grouped = df_COVID.groupby('powiat_miasto')['liczba_na_10_tys_mieszkancow'].mean()
 
     df_GUS = df_GUS.drop(df_GUS.columns[0], axis=1)
@@ -195,16 +236,16 @@ def merge_data():
 
     plt.title(f'Korelacja')
     sns.scatterplot(data=df_merged, x='liczba_na_10_tys_mieszkancow', y='przecietne wynagrodzenie brutto')
-    #plt.plot(df_merged['liczba_przypadkow'], df_merged['przecietne wynagrodzenie brutto'], line_style= '-.')
+    # plt.plot(df_merged['liczba_przypadkow'], df_merged['przecietne wynagrodzenie brutto'], line_style= '-.')
     # df_merged['liczba_przypadkow'].plot(figsize=(16, 8))
     # df_merged['przecietne wynagrodzenie brutto'].plot(figsize=(16, 8))
     plt.legend()
-    #plt.show()
+    # plt.show()
 
     corr = np.corrcoef(df_merged['przecietne wynagrodzenie brutto'], df_merged['liczba_na_10_tys_mieszkancow'])
     print(corr)
 
-    #print(df_merged)
+    # print(df_merged)
 
     # for index, row in df_COVID.iterrows():
     #     for index2, row2 in df_GUS.iterrows():
@@ -213,4 +254,4 @@ def merge_data():
     #         if data==data2:
     #             print(data)
 
-    #print(df_COVID)
+    # print(df_COVID)
