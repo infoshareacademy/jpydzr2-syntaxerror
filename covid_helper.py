@@ -146,8 +146,11 @@ def read_covid_data(path):
     return main_df
 
 
-def plot_chart(df, powiat):
-    df_copy = df[df['powiat_miasto'] == powiat].copy()
+def plot_chart(df, powiat, date_start, date_end):
+    df_copy = df[df['powiat_miasto'] == powiat].copy()  # Przekazanie powiatu
+    # start = df[df['stan_rekordu_na'] == date_start].index[0]
+    # end = df[df['stan_rekordu_na'] == date_end].index[-1]
+    # df_copy.index = df_copy['stan_rekordu_na'].loc[start:end]
     df_copy.index = df_copy['stan_rekordu_na']
     df_copy['liczba_przypadkow_7d_MA'] = df_copy['liczba_przypadkow'].rolling(7).mean()
 
@@ -177,6 +180,7 @@ def plot_map(df, path):
     ax.axis('off')
     plt.show()
 
+
 def merge_data():
     df_COVID = read_covid_data('/' + 'covid_data')
     df_GUS = pd.read_csv('/' + 'gus_data' + '/' + 'Wynagrodzenie')
@@ -185,9 +189,10 @@ def merge_data():
     df_GUS['Location'] = df_GUS['Location'].apply(lambda x: x.split('.')[-1])
 
     df_COVID['powiat_miasto'] = df_COVID['powiat_miasto'].apply(lambda x: x.lower())
-    #print(df_COVID.info())
-    df_COVID['liczba_na_10_tys_mieszkancow'] = df_COVID['liczba_na_10_tys_mieszkancow'].apply(lambda x: float(str(x).replace(',','.')))
-    #print(df_COVID.info())
+    # print(df_COVID.info())
+    df_COVID['liczba_na_10_tys_mieszkancow'] = df_COVID['liczba_na_10_tys_mieszkancow'].apply(
+        lambda x: float(str(x).replace(',', '.')))
+    # print(df_COVID.info())
     df_grouped = df_COVID.groupby('powiat_miasto')['liczba_na_10_tys_mieszkancow'].mean()
 
     df_GUS = df_GUS.drop(df_GUS.columns[0], axis=1)
@@ -195,16 +200,16 @@ def merge_data():
 
     plt.title(f'Korelacja')
     sns.scatterplot(data=df_merged, x='liczba_na_10_tys_mieszkancow', y='przecietne wynagrodzenie brutto')
-    #plt.plot(df_merged['liczba_przypadkow'], df_merged['przecietne wynagrodzenie brutto'], line_style= '-.')
+    # plt.plot(df_merged['liczba_przypadkow'], df_merged['przecietne wynagrodzenie brutto'], line_style= '-.')
     # df_merged['liczba_przypadkow'].plot(figsize=(16, 8))
     # df_merged['przecietne wynagrodzenie brutto'].plot(figsize=(16, 8))
     plt.legend()
-    #plt.show()
+    # plt.show()
 
     corr = np.corrcoef(df_merged['przecietne wynagrodzenie brutto'], df_merged['liczba_na_10_tys_mieszkancow'])
     print(corr)
 
-    #print(df_merged)
+    # print(df_merged)
 
     # for index, row in df_COVID.iterrows():
     #     for index2, row2 in df_GUS.iterrows():
@@ -213,4 +218,4 @@ def merge_data():
     #         if data==data2:
     #             print(data)
 
-    #print(df_COVID)
+    # print(df_COVID)
