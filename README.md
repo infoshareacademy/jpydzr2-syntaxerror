@@ -19,7 +19,9 @@ The main goal of the app is to collect, process and visualize the current COVID-
 
 
  1. a line chart with daily cases together with 7days moving average. The chart can be plotted per powiat (equivalent to a county). The default is set to 'Cały kraj' (eng. the entire country).
+    ![Plot1](./src/Figure_1.png)
  2. a choropleth map for the last known date
+    ![Plot2](./src/Figure_2.png)
 
 
 
