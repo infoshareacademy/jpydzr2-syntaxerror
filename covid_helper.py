@@ -329,3 +329,5 @@ def merge_data(df_COVID, df_GUS):
 
     return df_merged
 
+def plotcorrelation(date_from: None, date_to: None):
+    pass

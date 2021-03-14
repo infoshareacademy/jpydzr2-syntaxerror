@@ -10,9 +10,10 @@ def main():
               "2 - Ustaw zakres dat\n"
               "3 - Wczytaj i wyswietl dane\n"
               "4 - Wykres\n"
-              "5 - Mapa\n"
-              "6 - Update danych\n"
-              "7 - Koniec")
+              "5 - Wykres Korelacji\n"
+              "6 - Mapa\n"
+              "7 - Update danych\n"
+              "8 - Koniec")
 
         var = int(input())
         if var == 1:
@@ -26,10 +27,12 @@ def main():
             powiat = input('Podaj powiat\n')
             covid_helper.plot(powiat, date_start, date_end)
         elif var == 5:
-            covid_helper.plotmap()
+            covid_helper.plotcorrelation(date_start, date_end)
         elif var == 6:
-            covid_helper.update()
+            covid_helper.plotmap()
         elif var == 7:
+            covid_helper.update()
+        elif var == 8:
             exit()
 
 if __name__ == '__main__':
