@@ -46,46 +46,34 @@ def arg_parser():
 def save():
     covid_helper.save_covid_data(arg_parser().save_path)
     covid_helper.save_GUS_data(arg_parser().save_path)
+    covid_helper.save_gis_data(arg_parser().save_path)
+
     print("Data have been saved.")
 
 
 def read(powiat, date_start, date_end):
-    df = covid_helper.read_covid_data(arg_parser().read_path + '/' + 'covid_data')
+    df_COVID = covid_helper.read_covid_data(arg_parser().read_path + '/' + 'covid_data')
     print("Data have been loaded. Below is the snippet.")
-    start = df[df['stan_rekordu_na'] == date_start].index[0]
-    end = df[df['stan_rekordu_na'] == date_end].index[-1]
-    filter_ = df['powiat_miasto'].str.contains(powiat)
-    print(df[filter_].loc[start:end])
 
+    start = df_COVID[df_COVID['stan_rekordu_na'] == date_start].index[0]
+    end = df_COVID[df_COVID['stan_rekordu_na'] == date_end].index[-1]
+    filter_ = df_COVID['powiat_miasto'].str.contains(powiat)
+    print(df_COVID[filter_].loc[start:end])
 
+    df_GUS = covid_helper.read_GUS_Data(arg_parser().read_path + '/' + 'gus_data')
+    df_COVID = covid_helper.filter_group_COVID(df_COVID)
+
+    df_merged = covid_helper.merge_data(df_COVID, df_GUS)
+
+    print(df_merged.head())
+
+def update():
+        covid_helper.update_covid_data(arg_parser().update_path)
+        print("COVID data have been updated.")
 
 def plot(powiat, date_start, date_end):
     df = covid_helper.read_covid_data(arg_parser().read_path + '/' + 'covid_data')
     covid_helper.plot_chart(df, powiat, date_start, date_end)
-
-'''    if args.save:
-        covid_helper.save_covid_data(args.save_path)
-        covid_helper.save_GUS_data(args.save_path)
-        covid_helper.save_gis_data(args.save_path)
-        print("Data have been saved.")
-
-    elif args.update:
-        covid_helper.update_covid_data(args.update_path)
-        print("COVID data have been updated.")
-
-    elif args.read:
-        df_COVID = covid_helper.read_covid_data(args.read_path + '/' + 'covid_data')
-        df_GUS = covid_helper.read_GUS_Data(args.read_path + '/' + 'gus_data')
-        print("Data have been loaded. Below is the snippet.")
-        print(df_COVID.head())
-        print(df_GUS.head())
-
-        df_COVID = covid_helper.filter_group_COVID(df_COVID)
-
-        df_merged = covid_helper.merge_data(df_COVID, df_GUS)
-
-        print(df_merged.head())'''
-
 
 def plotmap():
     df = covid_helper.read_covid_data(arg_parser().read_path + '/' + 'covid_data')
@@ -101,7 +89,8 @@ def main():
           "2 - Wczytaj dane\n"
           "3 - Wykres\n"
           "4 - Mapa\n"
-          "5 - Koniec")
+          "5 - Koniec\n"
+          "6 - Update")
     while True:
         var = int(input())
         if var == 1:
@@ -114,7 +103,8 @@ def main():
             plotmap()
         elif var == 5:
             exit()
-
+        elif var == 6:
+            update()
 
 if __name__ == '__main__':
     main()
