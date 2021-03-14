@@ -58,9 +58,17 @@ def main():
         print("COVID data have been updated.")
 
     elif args.read:
-        df = covid_helper.read_covid_data(args.read_path + '/' + 'covid_data')
+        df_COVID = covid_helper.read_covid_data(args.read_path + '/' + 'covid_data')
+        df_GUS = covid_helper.read_GUS_Data(args.read_path + '/' + 'gus_data')
         print("Data have been loaded. Below is the snippet.")
-        print(df.head())
+        print(df_COVID.head())
+        print(df_GUS.head())
+
+        df_COVID = covid_helper.filter_group_COVID(df_COVID)
+
+        df_merged = covid_helper.merge_data(df_COVID, df_GUS)
+
+        print(df_merged.head())
 
     elif args.plot:
         df = covid_helper.read_covid_data(args.read_path + '/' + 'covid_data')
