@@ -193,22 +193,22 @@ def read_GUS_Data(path = os.getcwd() + '/input/gus_data'):
 
     return df_GUS
 
+def filter_group_COVID(df_COVID, date_from = None, date_to = None):
+
+    df_COVID['liczba_na_10_tys_mieszkancow'] = df_COVID['liczba_na_10_tys_mieszkancow'].apply(lambda x: float(str(x).replace(',','.')))
+    df_COVID['powiat_miasto'] = df_COVID['powiat_miasto'].apply(lambda x: x.lower())
+
+    df_grouped = df_COVID.groupby('powiat_miasto').mean()
+
+    return df_grouped
+
 def merge_data(df_COVID, df_GUS):
 
     df_GUS['Location'] = df_GUS['Location'].apply(lambda x: x.lower().split()[-1])
     df_GUS['Location'] = df_GUS['Location'].apply(lambda x: x.split('.')[-1])
 
-    df_COVID['powiat_miasto'] = df_COVID['powiat_miasto'].apply(lambda x: x.lower())
-
-    #df_COVID['liczba_na_10_tys_mieszkancow'] = df_COVID['liczba_na_10_tys_mieszkancow'].apply(lambda x: float(str(x).replace(',','.')))
-    #df_grouped = df_COVID.groupby('powiat_miasto')['liczba_na_10_tys_mieszkancow'].mean()
-
-    df_grouped = df_COVID
-
     df_GUS = df_GUS.drop(df_GUS.columns[0], axis=1)
-    df_merged = df_GUS.merge(df_grouped, left_on='Location', right_on='powiat_miasto', how='inner')
-
-    return df_merged
+    df_merged = df_GUS.merge(df_COVID, left_on='Location', right_on='powiat_miasto', how='inner')
 
     # plt.title(f'Korelacja')
     # sns.scatterplot(data=df_merged, x='liczba_na_10_tys_mieszkancow', y='Muzea')
@@ -217,3 +217,6 @@ def merge_data(df_COVID, df_GUS):
     #
     # corr = np.corrcoef(df_merged['Muzea'], df_merged['liczba_na_10_tys_mieszkancow'])
     # print(corr)
+
+    return df_merged
+

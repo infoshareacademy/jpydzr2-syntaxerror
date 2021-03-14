@@ -55,6 +55,8 @@ def main():
         print(df_COVID.head())
         print(df_GUS.head())
 
+        df_COVID = covid_helper.filter_group_COVID(df_COVID)
+
         df_merged = covid_helper.merge_data(df_COVID, df_GUS)
 
         print(df_merged.head())
