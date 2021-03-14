@@ -43,11 +43,27 @@ def arg_parser():
     return args
 
 
-def main():
-    # Get input arguments
-    args = arg_parser()
+def save():
+    covid_helper.save_covid_data(arg_parser().save_path)
+    covid_helper.save_GUS_data(arg_parser().save_path)
+    print("Data have been saved.")
 
-    if args.save:
+
+def read(powiat, date_start, date_end):
+    df = covid_helper.read_covid_data(arg_parser().read_path + '/' + 'covid_data')
+    print("Data have been loaded. Below is the snippet.")
+    start = df[df['stan_rekordu_na'] == date_start].index[0]
+    end = df[df['stan_rekordu_na'] == date_end].index[-1]
+    filter_ = df['powiat_miasto'].str.contains(powiat)
+    print(df[filter_].loc[start:end])
+
+
+
+def plot(powiat, date_start, date_end):
+    df = covid_helper.read_covid_data(arg_parser().read_path + '/' + 'covid_data')
+    covid_helper.plot_chart(df, powiat, date_start, date_end)
+
+'''    if args.save:
         covid_helper.save_covid_data(args.save_path)
         covid_helper.save_GUS_data(args.save_path)
         covid_helper.save_gis_data(args.save_path)
@@ -68,18 +84,36 @@ def main():
 
         df_merged = covid_helper.merge_data(df_COVID, df_GUS)
 
-        print(df_merged.head())
+        print(df_merged.head())'''
 
-    elif args.plot:
-        df = covid_helper.read_covid_data(args.read_path + '/' + 'covid_data')
-        covid_helper.plot_chart(df, args.powiat)
 
-    elif args.plot_map:
-        df = covid_helper.read_covid_data(args.read_path + '/' + 'covid_data')
-        covid_helper.plot_map(df, args.read_path + '/' + 'geo_data')
+def plotmap():
+    df = covid_helper.read_covid_data(arg_parser().read_path + '/' + 'covid_data')
+    covid_helper.plot_map(df, arg_parser().read_path + '/' + 'geo_data')
 
-    else:
-        print('No arguments provided. Please check -h for help.')
+
+def main():
+    print("Witaj w COVID APP")
+    powiat = input('Podaj powiat\n')
+    date_start = input('Od RRRR-MM-DD\n')
+    date_end = input('do RRRR-MM-DD\n')
+    print("1 - Pobierz dane\n"
+          "2 - Wczytaj dane\n"
+          "3 - Wykres\n"
+          "4 - Mapa\n"
+          "5 - Koniec")
+    while True:
+        var = int(input())
+        if var == 1:
+            save()
+        elif var == 2:
+            read(powiat, date_start, date_end)
+        elif var == 3:
+            plot(powiat, date_start, date_end)
+        elif var == 4:
+            plotmap()
+        elif var == 5:
+            exit()
 
 
 if __name__ == '__main__':

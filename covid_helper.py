@@ -201,8 +201,11 @@ def read_covid_data(path):
     return main_df
 
 
-def plot_chart(df, powiat):
-    df_copy = df[df['powiat_miasto'] == powiat].copy()
+def plot_chart(df, powiat, date_start, date_end):
+    df_copy = df[df['powiat_miasto'] == powiat].copy()  # Przekazanie powiatu
+    # start = df[df['stan_rekordu_na'] == date_start].index[0]
+    # end = df[df['stan_rekordu_na'] == date_end].index[-1]
+    # df_copy.index = df_copy['stan_rekordu_na'].loc[start:end]
     df_copy.index = df_copy['stan_rekordu_na']
     df_copy['liczba_przypadkow_7d_MA'] = (df_copy['liczba_przypadkow']
                                           .rolling(7)
@@ -239,7 +242,6 @@ def plot_map(df, path):
     ax.axis('off')
     plt.show()
 
-
 def read_GUS_Data(path = os.getcwd() + '/input/gus_data'):
     GUS_path = path
 
@@ -266,6 +268,7 @@ def filter_group_COVID(df_COVID, date_from = None, date_to = None):
 
 def merge_data(df_COVID, df_GUS):
 
+
     df_GUS['Location'] = df_GUS['Location'].apply(lambda x: x.lower().split()[-1])
     df_GUS['Location'] = df_GUS['Location'].apply(lambda x: x.split('.')[-1])
 
@@ -281,3 +284,4 @@ def merge_data(df_COVID, df_GUS):
     # print(corr)
 
     return df_merged
+
