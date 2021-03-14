@@ -14,7 +14,6 @@ import seaborn as sns
 
 base_color = sns.color_palette()[0]
 
-
 class RequestData:
     def __init__(self, id: int, description: str, year: int,
                  filename: str) -> None:
@@ -23,6 +22,45 @@ class RequestData:
         self.year = year
         self.filename = filename
 
+def _data_path():
+    path = os.getcwd() + '/input'
+    return path
+
+def save_all_data():
+    save_covid_data(_data_path())
+    save_GUS_data(_data_path())
+    save_gis_data(_data_path())
+
+    print("Data have been saved.")
+
+def read_all_data(date_start, date_end):
+
+    df_COVID = read_covid_data(_data_path() + '/' + 'covid_data')
+    df_GUS = read_GUS_Data(_data_path() + '/' + 'gus_data')
+
+    df_COVID = filter_group_COVID(df_COVID, date_start, date_end)
+    df_merged = merge_data(df_COVID, df_GUS)
+
+    # start = df_COVID[df_COVID['stan_rekordu_na'] == date_start].index[0]
+    # end = df_COVID[df_COVID['stan_rekordu_na'] == date_end].index[-1]
+    # filter_ = df_COVID['powiat_miasto'].str.contains(powiat)
+    # print(df_COVID[filter_].loc[start:end])
+
+    print("Data have been loaded. Below is the snippet.")
+
+    print(df_merged.head())
+
+def update():
+    update_covid_data(_data_path())
+    print("COVID data have been updated.")
+
+def plot(powiat, date_start, date_end):
+    df = read_covid_data(_data_path() + '/' + 'covid_data')
+    plot_chart(df, powiat, date_start, date_end)
+
+def plotmap():
+    df = read_covid_data(_data_path() + '/' + 'covid_data')
+    plot_map(df, _data_path() + '/' + 'geo_data')
 
 def _get_total_records(url):
     request = requests.get(url)
@@ -261,6 +299,12 @@ def filter_group_COVID(df_COVID, date_from = None, date_to = None):
 
     df_COVID['liczba_na_10_tys_mieszkancow'] = df_COVID['liczba_na_10_tys_mieszkancow'].apply(lambda x: float(str(x).replace(',','.')))
     df_COVID['powiat_miasto'] = df_COVID['powiat_miasto'].apply(lambda x: x.lower())
+
+    if date_from is not None and date_to is not None:
+        df_COVID = df_COVID.loc[(df_COVID['stan_rekordu_na'] <= date_to) & (df_COVID['stan_rekordu_na'] >= date_from)]
+
+    # df.loc[(df['column_name'] >= A) & (df['column_name'] <= B)]
+    # df_copy = df[df['powiat_miasto'] == powiat].copy()  # Przekazanie powiatu
 
     df_grouped = df_COVID.groupby('powiat_miasto').mean()
 
