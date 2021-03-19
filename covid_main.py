@@ -1,6 +1,7 @@
 import covid_helper
 from SQL_DB import *
 
+
 def main():
     print("Witaj w COVID APP")
     date_start = None
