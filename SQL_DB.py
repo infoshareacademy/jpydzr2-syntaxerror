@@ -3,8 +3,8 @@ from mysql import connector
 
 mydb = mysql.connector.connect(
   host="localhost",
-  user="xxxxx",
-  password="xxxx"
+  user="XXXX",
+  password="XXX"
 )
 
 print(mydb)
