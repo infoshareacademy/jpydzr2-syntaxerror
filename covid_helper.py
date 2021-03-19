@@ -14,6 +14,7 @@ import seaborn as sns
 
 base_color = sns.color_palette()[0]
 
+
 class RequestData:
     def __init__(self, id: int, description: str, year: int,
                  filename: str) -> None:
@@ -22,19 +23,19 @@ class RequestData:
         self.year = year
         self.filename = filename
 
+
 def _data_path():
     path = os.getcwd() + '/input'
     return path
 
+
 def save_all_data():
     save_covid_data(_data_path())
     save_GUS_data(_data_path())
-    save_gis_data(_data_path())
-
     print("Data have been saved.")
 
-def read_all_data(date_start, date_end):
 
+def read_all_data(date_start, date_end):
     df_COVID = read_covid_data(_data_path() + '/' + 'covid_data')
     df_GUS = read_GUS_Data(_data_path() + '/' + 'gus_data')
 
@@ -50,17 +51,21 @@ def read_all_data(date_start, date_end):
 
     print(df_merged.head())
 
+
 def update():
     update_covid_data(_data_path())
     print("COVID data have been updated.")
+
 
 def plot(powiat, date_start, date_end):
     df = read_covid_data(_data_path() + '/' + 'covid_data')
     plot_chart(df, powiat, date_start, date_end)
 
+
 def plotmap():
     df = read_covid_data(_data_path() + '/' + 'covid_data')
-    plot_map(df, _data_path() + '/' + 'geo_data')
+    plot_map(df)
+
 
 def _get_total_records(url):
     request = requests.get(url)
@@ -115,23 +120,6 @@ def save_GUS_data(path):
         df_GUS_data.to_csv(gus_output_path + '/' + gus_variable.filename)
 
 
-def save_gis_data(path):
-    # link to the geo locations of powiat
-    mapa_powiatow = 'https://www.gis-support.pl/downloads/Powiaty.zip'
-
-    # folder where all the files will be  saved
-    geo_path = path + '/' + 'geo_data'
-
-    # create a subfolder for geo data
-    if not os.path.exists(geo_path):
-        os.makedirs(geo_path)
-
-    # get and extract all geo data
-    r = requests.get(mapa_powiatow).content
-    z = zipfile.ZipFile(io.BytesIO(r))
-    z.extractall(geo_path)
-
-
 def fix_encoding(all_files, start_file_idx=None, end_file_idx=None,
                  encoding='utf-8'):
     for file in all_files[start_file_idx:end_file_idx]:
@@ -155,7 +143,6 @@ def fix_encoding(all_files, start_file_idx=None, end_file_idx=None,
 
 
 def save_covid_data(path):
-
     # link to the archived data per 'powiat'
     archiwalne = 'https://arcgis.com/sharing/rest/content/items/e16df1fa98c2452783ec10b0aea4b341/data'
 
@@ -257,13 +244,14 @@ def plot_chart(df, powiat, date_start, date_end):
     plt.show()
 
 
-def plot_map(df, path):
+def plot_map(covid_df):
     # read goe data
-    map_df = gpd.read_file(path + '/Powiaty.shp')
+    mapa_powiatow = 'https://www.gis-support.pl/downloads/Powiaty.zip'
+    map_df = gpd.GeoDataFrame.from_file(mapa_powiatow)
 
     # show only the latest results
-    last_result = df.stan_rekordu_na.max()
-    df_last_results = df[df.stan_rekordu_na == last_result][
+    last_result = covid_df.stan_rekordu_na.max()
+    df_last_results = covid_df[covid_df.stan_rekordu_na == last_result][
         ['teryt', 'liczba_przypadkow', 'stan_rekordu_na']]
 
     # join datasets
@@ -280,7 +268,8 @@ def plot_map(df, path):
     ax.axis('off')
     plt.show()
 
-def read_GUS_Data(path = os.getcwd() + '/input/gus_data'):
+
+def read_GUS_Data(path=os.getcwd() + '/input/gus_data'):
     GUS_path = path
 
     df_GUS = None
@@ -295,13 +284,17 @@ def read_GUS_Data(path = os.getcwd() + '/input/gus_data'):
 
     return df_GUS
 
-def filter_group_COVID(df_COVID, date_from = None, date_to = None):
 
-    df_COVID['liczba_na_10_tys_mieszkancow'] = df_COVID['liczba_na_10_tys_mieszkancow'].apply(lambda x: float(str(x).replace(',','.')))
-    df_COVID['powiat_miasto'] = df_COVID['powiat_miasto'].apply(lambda x: x.lower())
+def filter_group_COVID(df_COVID, date_from=None, date_to=None):
+    df_COVID['liczba_na_10_tys_mieszkancow'] = df_COVID[
+        'liczba_na_10_tys_mieszkancow'].apply(
+        lambda x: float(str(x).replace(',', '.')))
+    df_COVID['powiat_miasto'] = df_COVID['powiat_miasto'].apply(
+        lambda x: x.lower())
 
     if date_from is not None and date_to is not None:
-        df_COVID = df_COVID.loc[(df_COVID['stan_rekordu_na'] <= date_to) & (df_COVID['stan_rekordu_na'] >= date_from)]
+        df_COVID = df_COVID.loc[(df_COVID['stan_rekordu_na'] <= date_to) & (
+                    df_COVID['stan_rekordu_na'] >= date_from)]
 
     # df.loc[(df['column_name'] >= A) & (df['column_name'] <= B)]
     # df_copy = df[df['powiat_miasto'] == powiat].copy()  # Przekazanie powiatu
@@ -310,14 +303,15 @@ def filter_group_COVID(df_COVID, date_from = None, date_to = None):
 
     return df_grouped
 
+
 def merge_data(df_COVID, df_GUS):
-
-
-    df_GUS['Location'] = df_GUS['Location'].apply(lambda x: x.lower().split()[-1])
+    df_GUS['Location'] = df_GUS['Location'].apply(
+        lambda x: x.lower().split()[-1])
     df_GUS['Location'] = df_GUS['Location'].apply(lambda x: x.split('.')[-1])
 
     df_GUS = df_GUS.drop(df_GUS.columns[0], axis=1)
-    df_merged = df_GUS.merge(df_COVID, left_on='Location', right_on='powiat_miasto', how='inner')
+    df_merged = df_GUS.merge(df_COVID, left_on='Location',
+                             right_on='powiat_miasto', how='inner')
 
     # plt.title(f'Korelacja')
     # sns.scatterplot(data=df_merged, x='liczba_na_10_tys_mieszkancow', y='Muzea')
@@ -328,6 +322,7 @@ def merge_data(df_COVID, df_GUS):
     # print(corr)
 
     return df_merged
+
 
 def plotcorrelation(date_from: None, date_to: None):
     pass
