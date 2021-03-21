@@ -88,8 +88,8 @@ def save_GUS_data(path):
         RequestData(746289, 'mediana wieku ludnosci', 2019, 'Mediana'),
         RequestData(1601437, 'liczba boisk futbolowych', 2018, 'Boiska'),
         RequestData(1241, 'liczba muzeow', 2019, 'Muzea'),
-        RequestData(64428, 'przecietne wynagrodzenie brutto', 2019,
-                    'Wynagrodzenie')
+        RequestData(64428, 'przecietne wynagrodzenie brutto', 2019,'Wynagrodzenie'),
+        RequestData(1508, 'zanieczyszczenie powietrza', 2019, 'Zanieczyszczenie'),
     ]
 
     unit_level = 5  # poziom agregacji 5 - powiaty
