@@ -1,6 +1,0 @@
-INFO:root:ProcessingData().show_world_covid_data()
-INFO:root:ProcessingData().show_polish_covid_data()
-INFO:root:# ProcessingData().refresh_world_data()
-INFO:root:ProcessingData().show_world_covid_data()
-INFO:root:ProcessingData().refresh_polish_data()
-INFO:root:ProcessingData().show_polish_covid_data()

@@ -1,10 +1,6 @@
-import datetime
-import glob
-import io
 import os
-import zipfile
-from pathlib import Path
-
+import config
+from sqlalchemy import create_engine
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,6 +10,7 @@ import seaborn as sns
 
 base_color = sns.color_palette()[0]
 
+
 class RequestData:
     def __init__(self, id: int, description: str, year: int,
                  filename: str) -> None:
@@ -22,20 +19,19 @@ class RequestData:
         self.year = year
         self.filename = filename
 
+
 def _data_path():
     path = os.getcwd() + '/input'
     return path
 
-def save_all_data():
-    save_covid_data(_data_path())
-    save_GUS_data(_data_path())
-    save_gis_data(_data_path())
 
+def save_all_data():
+    save_GUS_data(_data_path())
     print("Data have been saved.")
 
-def read_all_data(date_start, date_end):
 
-    df_COVID = read_covid_data(_data_path() + '/' + 'covid_data')
+def read_all_data(date_start, date_end):
+    df_COVID = read_covid_data()
     df_GUS = read_GUS_Data(_data_path() + '/' + 'gus_data')
 
     df_COVID = filter_group_COVID(df_COVID, date_start, date_end)
@@ -50,17 +46,11 @@ def read_all_data(date_start, date_end):
 
     print(df_merged.head())
 
-def update():
-    update_covid_data(_data_path())
-    print("COVID data have been updated.")
 
 def plot(powiat, date_start, date_end):
-    df = read_covid_data(_data_path() + '/' + 'covid_data')
+    df = read_covid_data()
     plot_chart(df, powiat, date_start, date_end)
 
-def plotmap():
-    df = read_covid_data(_data_path() + '/' + 'covid_data')
-    plot_map(df, _data_path() + '/' + 'geo_data')
 
 def _get_total_records(url):
     request = requests.get(url)
@@ -115,128 +105,21 @@ def save_GUS_data(path):
         df_GUS_data.to_csv(gus_output_path + '/' + gus_variable.filename)
 
 
-def save_gis_data(path):
-    # link to the geo locations of powiat
-    mapa_powiatow = 'https://www.gis-support.pl/downloads/Powiaty.zip'
+def read_covid_data():
 
-    # folder where all the files will be  saved
-    geo_path = path + '/' + 'geo_data'
+    engine = create_engine('mysql+mysqlconnector://{user}:{passw}@{host}/{db}'
+                           .format(user=config.user,
+                                   passw=config.passwd,
+                                   host=config.host,
+                                   db=config.db_name))
 
-    # create a subfolder for geo data
-    if not os.path.exists(geo_path):
-        os.makedirs(geo_path)
+    df = pd.read_sql('SELECT * FROM covid_19_powiat', con=engine)
 
-    # get and extract all geo data
-    r = requests.get(mapa_powiatow).content
-    z = zipfile.ZipFile(io.BytesIO(r))
-    z.extractall(geo_path)
-
-
-def fix_encoding(all_files, start_file_idx=None, end_file_idx=None,
-                 encoding='utf-8'):
-    for file in all_files[start_file_idx:end_file_idx]:
-        file_name = Path(file).name
-
-        # make a date minus 1 day (COVID results are from the previous day)
-        d = datetime.date(int(file_name[:4]),  # day
-                          int(file_name[4:6]),  # month
-                          int(file_name[6:8])  # year
-                          ) - datetime.timedelta(days=1)
-
-        # read each file
-        df = pd.read_csv(file, encoding=encoding, sep=';', header=0)
-
-        # add or overwrite 'stan rekordu na'
-        # as there are cases with missing data
-        df['stan_rekordu_na'] = d
-
-        # save as the same file name
-        df.to_csv(file, header=True, encoding='utf-8', sep=';', index=False)
-
-
-def save_covid_data(path):
-
-    # link to the archived data per 'powiat'
-    archiwalne = 'https://arcgis.com/sharing/rest/content/items/e16df1fa98c2452783ec10b0aea4b341/data'
-
-    # folder where all the files will be  saved
-    covid_path = path + '/' + 'covid_data'
-
-    # create a subfolder for covid data
-    if not os.path.exists(covid_path):
-        os.makedirs(covid_path)
-
-    # get and extract all csv from:
-    # https://www.gov.pl/web/koronawirus/wykaz-zarazen-koronawirusem-sars-cov-2
-    r = requests.get(archiwalne).content
-    z = zipfile.ZipFile(io.BytesIO(r))
-    z.extractall(covid_path)
-
-    # list of all csv with covid data
-    all_files = sorted(glob.glob(covid_path + "/*.csv"))
-
-    # iterate through all file names and extract dates
-    # the first 30 files have utf-8 encoding
-    fix_encoding(all_files, end_file_idx=30, encoding='utf-8')
-
-    # from the 31st files, files have Windows-1250 encoding
-    fix_encoding(all_files, start_file_idx=30, encoding='Windows-1250')
-
-
-def update_covid_data(path):
-    aktualne = 'https://www.arcgis.com/sharing/rest/content/items/6ff45d6b5b224632a672e764e04e8394/data'
-
-    covid_path = path + '/' + 'covid_data'
-    all_files = sorted(glob.glob(covid_path + "/*.csv"))
-
-    # read csv
-    df = pd.read_csv(aktualne, encoding='Windows-1250', sep=';', header=0)
-
-    # change the datatype to datetime (for timedelta)
-    df['stan_rekordu_na'] = df['stan_rekordu_na'].astype('datetime64[s]')
-
-    # get the date from the file (data from the previous day!)
-    max_date = df['stan_rekordu_na'].max()
-
-    # adapt the time format to the one used in the file names
-    yesterday = max_date.strftime("%Y%m%d")
-
-    # get the date for the file name (the report date!)
-    today = max_date + datetime.timedelta(days=1)
-
-    # adapt the time format to the one used in the file names
-    today = today.strftime("%Y%m%d")
-
-    # path and file name to be saved
-    path_to_save = covid_path + '/' + today + '074502_rap_rcb_pow_eksport.csv'
-
-    # check if the yesterday file is among all files
-    if yesterday in [Path(file).name[:8] for file in all_files]:
-        # if yes --> save the csv with the current date
-        df.to_csv(path_to_save, header=True, encoding='utf-8', sep=';',
-                  index=False)
-    else:
-        # if no --> download the entire zip file
-        save_covid_data(path)
-
-
-def read_covid_data(path):
-    path = path
-    all_files = sorted(glob.glob(path + "/*.csv"))
-
-    # create a list of dataframes, [39:] selects only 2021 data
-    list_of_dfs = [pd.read_csv(file, encoding='utf-8', sep=';', header=0) for
-                   file in all_files[39:]]
-
-    # concatenate all dataframes into one
-    main_df = pd.concat(list_of_dfs, axis=0, ignore_index=True, sort=False)
-
-    # remove 't' from teryt code and add 0 for teryt with 3 digits
-    main_df['teryt'] = main_df['teryt'].str.replace('t', '')
-    main_df['teryt'] = main_df['teryt'].apply(
+    df['teryt'] = df['teryt'].str.replace('t', '')
+    df['teryt'] = df['teryt'].apply(
         lambda x: '0' + str(x) if len(str(x)) < 4 else str(x))
 
-    return main_df
+    return df
 
 
 def plot_chart(df, powiat, date_start, date_end):
@@ -257,13 +140,27 @@ def plot_chart(df, powiat, date_start, date_end):
     plt.show()
 
 
-def plot_map(df, path):
-    # read goe data
-    map_df = gpd.read_file(path + '/Powiaty.shp')
+def plot_map():
+    # read geo data
+    mapa_powiatow = 'https://www.gis-support.pl/downloads/Powiaty.zip'
+    map_df = gpd.GeoDataFrame.from_file(mapa_powiatow)
+
+    # read covid data
+    engine = create_engine('mysql+mysqlconnector://{user}:{passw}@{host}/{db}'
+                           .format(user=config.user,
+                                   passw=config.passwd,
+                                   host=config.host,
+                                   db=config.db_name))
+
+    covid_df = pd.read_sql('SELECT teryt, liczba_przypadkow, stan_rekordu_na FROM covid_19_powiat', con=engine)
+
+    covid_df['teryt'] = covid_df['teryt'].str.replace('t', '')
+    covid_df['teryt'] = covid_df['teryt'].apply(
+        lambda x: '0' + str(x) if len(str(x)) < 4 else str(x))
 
     # show only the latest results
-    last_result = df.stan_rekordu_na.max()
-    df_last_results = df[df.stan_rekordu_na == last_result][
+    last_result = covid_df.stan_rekordu_na.max()
+    df_last_results = covid_df[covid_df.stan_rekordu_na == last_result][
         ['teryt', 'liczba_przypadkow', 'stan_rekordu_na']]
 
     # join datasets
@@ -280,7 +177,8 @@ def plot_map(df, path):
     ax.axis('off')
     plt.show()
 
-def read_GUS_Data(path = os.getcwd() + '/input/gus_data'):
+
+def read_GUS_Data(path=os.getcwd() + '/input/gus_data'):
     GUS_path = path
 
     df_GUS = None
@@ -295,13 +193,17 @@ def read_GUS_Data(path = os.getcwd() + '/input/gus_data'):
 
     return df_GUS
 
-def filter_group_COVID(df_COVID, date_from = None, date_to = None):
 
-    df_COVID['liczba_na_10_tys_mieszkancow'] = df_COVID['liczba_na_10_tys_mieszkancow'].apply(lambda x: float(str(x).replace(',','.')))
-    df_COVID['powiat_miasto'] = df_COVID['powiat_miasto'].apply(lambda x: x.lower())
+def filter_group_COVID(df_COVID, date_from=None, date_to=None):
+    df_COVID['liczba_na_10_tys_mieszkancow'] = df_COVID[
+        'liczba_na_10_tys_mieszkancow'].apply(
+        lambda x: float(str(x).replace(',', '.')))
+    df_COVID['powiat_miasto'] = df_COVID['powiat_miasto'].apply(
+        lambda x: x.lower())
 
     if date_from is not None and date_to is not None:
-        df_COVID = df_COVID.loc[(df_COVID['stan_rekordu_na'] <= date_to) & (df_COVID['stan_rekordu_na'] >= date_from)]
+        df_COVID = df_COVID.loc[(df_COVID['stan_rekordu_na'] <= date_to) & (
+                    df_COVID['stan_rekordu_na'] >= date_from)]
 
     # df.loc[(df['column_name'] >= A) & (df['column_name'] <= B)]
     # df_copy = df[df['powiat_miasto'] == powiat].copy()  # Przekazanie powiatu
@@ -310,14 +212,15 @@ def filter_group_COVID(df_COVID, date_from = None, date_to = None):
 
     return df_grouped
 
+
 def merge_data(df_COVID, df_GUS):
-
-
-    df_GUS['Location'] = df_GUS['Location'].apply(lambda x: x.lower().split()[-1])
+    df_GUS['Location'] = df_GUS['Location'].apply(
+        lambda x: x.lower().split()[-1])
     df_GUS['Location'] = df_GUS['Location'].apply(lambda x: x.split('.')[-1])
 
     df_GUS = df_GUS.drop(df_GUS.columns[0], axis=1)
-    df_merged = df_GUS.merge(df_COVID, left_on='Location', right_on='powiat_miasto', how='inner')
+    df_merged = df_GUS.merge(df_COVID, left_on='Location',
+                             right_on='powiat_miasto', how='inner')
 
     # plt.title(f'Korelacja')
     # sns.scatterplot(data=df_merged, x='liczba_na_10_tys_mieszkancow', y='Muzea')
@@ -328,6 +231,7 @@ def merge_data(df_COVID, df_GUS):
     # print(corr)
 
     return df_merged
+
 
 def plotcorrelation(date_from: None, date_to: None):
     pass

@@ -1,20 +1,20 @@
 import covid_helper
 from SQL_DB import *
 
+
 def main():
     print("Witaj w COVID APP")
     date_start = None
     date_end = None
 
     while True:
-        print("1 - Pobierz dane\n"
+        print("1 - Pobierz dane GUS\n"
               "2 - Ustaw zakres dat\n"
               "3 - Wczytaj i wyswietl dane\n"
               "4 - Wykres\n"
               "5 - Wykres Korelacji\n"
               "6 - Mapa\n"
-              "7 - Update danych\n"
-              "8 - Koniec")
+              "7 - Koniec")
 
         var = int(input())
         if var == 1:
@@ -47,17 +47,15 @@ def main():
             mycursor.execute("INSERT INTO logs (log) VALUES ('" + corelation_tmp + "')")
             mydb.commit()
         elif var == 6:
-            covid_helper.plotmap()
+            covid_helper.plot_map()
             mycursor.execute("INSERT INTO logs (log) VALUES ('Wykres mapy')")
             mydb.commit()
         elif var == 7:
-            covid_helper.update()
-            mycursor.execute("INSERT INTO logs (log) VALUES ('Update danych')")
-            mydb.commit()
-        elif var == 8:
             mycursor.execute("INSERT INTO logs (log) VALUES ('Exit')")
             mydb.commit()
+            print(" Thank you for using the program! Bye!")
             exit()
+
 
 if __name__ == '__main__':
     main()
