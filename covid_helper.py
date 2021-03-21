@@ -88,8 +88,8 @@ def save_GUS_data(path):
         RequestData(746289, 'mediana wieku ludnosci', 2019, 'Mediana'),
         RequestData(1601437, 'liczba boisk futbolowych', 2018, 'Boiska'),
         RequestData(1241, 'liczba muzeow', 2019, 'Muzea'),
-        RequestData(64428, 'przecietne wynagrodzenie brutto', 2019,
-                    'Wynagrodzenie')
+        RequestData(64428, 'przecietne wynagrodzenie brutto', 2019,'Wynagrodzenie'),
+        RequestData(1508, 'zanieczyszczenie powietrza', 2019, 'Zanieczyszczenie'),
     ]
 
     unit_level = 5  # poziom agregacji 5 - powiaty
@@ -222,16 +222,29 @@ def merge_data(df_COVID, df_GUS):
     df_merged = df_GUS.merge(df_COVID, left_on='Location',
                              right_on='powiat_miasto', how='inner')
 
-    # plt.title(f'Korelacja')
-    # sns.scatterplot(data=df_merged, x='liczba_na_10_tys_mieszkancow', y='Muzea')
-    #
-    # plt.legend()
-    #
-    # corr = np.corrcoef(df_merged['Muzea'], df_merged['liczba_na_10_tys_mieszkancow'])
-    # print(corr)
+
 
     return df_merged
 
 
 def plotcorrelation(date_from: None, date_to: None):
-    pass
+    df_GUS = read_GUS_Data()
+    df_COVID = read_covid_data()
+
+    df_COVID = filter_group_COVID(df_COVID, date_from, date_to)
+    df_merged = merge_data(df_COVID, df_GUS)
+
+    for no, col in enumerate(df_merged.columns):
+        print(no, col)
+
+    x = int(input("Provide X Axis: "))
+    y = int(input("Provide Y Axis: "))
+
+    plt.title(f'Korelacja')
+
+    sns.scatterplot(data=df_merged, x=str(df_merged.columns[x]), y=str(df_merged.columns[y]))
+
+    plt.show()
+
+    corr = np.corrcoef(df_merged[df_merged.columns[x]], df_merged[df_merged.columns[y]])
+    print(f'Correlation coefficient {corr}')
