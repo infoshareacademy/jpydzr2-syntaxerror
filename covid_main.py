@@ -1,5 +1,15 @@
 import covid_helper
 from SQL_DB import *
+import datetime
+
+
+def validate_format(inp):
+    try:
+       return datetime.datetime.strptime(inp,"%Y-%m-%d")
+    except:
+       print("Podaj dobry format %Y-%m-%d!")
+       inp = input()
+       validate_format(inp)
 
 
 def main():
@@ -23,10 +33,15 @@ def main():
             covid_helper.save_all_data()
         elif var == 2:
             date_start = input('Od RRRR-MM-DD\n')
+            validate_format(date_start)
+
             date_start_tmp = ('Wybrano date początkową ' + str(date_start))
             mycursor.execute("INSERT INTO logs (log) VALUES ('" + date_start_tmp + "')")
             mydb.commit()
+
             date_end = input('do RRRR-MM-DD\n')
+            validate_format(date_end)
+
             date_end_tmp = ('Wybrano date końcową ' +str(date_end))
             mycursor.execute("INSERT INTO logs (log) VALUES ('" + date_end_tmp + "')")
             mydb.commit()

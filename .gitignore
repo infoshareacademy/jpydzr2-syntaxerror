@@ -135,3 +135,4 @@ dmypy.json
 # AWS settings
 *.ini
 config.py
+SQL_DB.py
