@@ -71,7 +71,7 @@ def main():
             mydb.commit()
         elif var == 4:
             powiat = input('Podaj powiat\n')
-            # powiat = validate_powiat(powiat)
+            powiat = validate_powiat(powiat)
             covid_helper.plot(powiat, date_start, date_end)
             plot_tmp = ('Wykres dla: ' + str(powiat) + 'w datach od: ' + str(date_start) + 'do: ' +str(date_end))
             mycursor.execute("INSERT INTO logs (log) VALUES ('" + plot_tmp + "')")
