@@ -37,11 +37,6 @@ def read_all_data(date_start, date_end):
     df_COVID = filter_group_COVID(df_COVID, date_start, date_end)
     df_merged = merge_data(df_COVID, df_GUS)
 
-    # start = df_COVID[df_COVID['stan_rekordu_na'] == date_start].index[0]
-    # end = df_COVID[df_COVID['stan_rekordu_na'] == date_end].index[-1]
-    # filter_ = df_COVID['powiat_miasto'].str.contains(powiat)
-    # print(df_COVID[filter_].loc[start:end])
-
     print("Data have been loaded. Below is the snippet.")
 
     print(df_merged.head())
@@ -124,18 +119,26 @@ def read_covid_data():
 
 def plot_chart(df, powiat, date_start, date_end):
     df_copy = df[df['powiat_miasto'] == powiat].copy()  # Przekazanie powiatu
-    # start = df[df['stan_rekordu_na'] == date_start].index[0]
-    # end = df[df['stan_rekordu_na'] == date_end].index[-1]
-    # df_copy.index = df_copy['stan_rekordu_na'].loc[start:end]
+
+    if date_start is not None and date_end is not None:
+        df_copy = df_copy.loc[(df_copy['stan_rekordu_na'] <= date_end) & (
+                    df_copy['stan_rekordu_na'] >= date_start)]
+
     df_copy.index = df_copy['stan_rekordu_na']
-    df_copy['liczba_przypadkow_7d_MA'] = (df_copy['liczba_przypadkow']
+
+    for no, col in enumerate(df_copy.columns):
+        print(no, col)
+
+    x = int(input("Which data should I plot?: "))
+
+    df_copy['7d_Moving_Average'] = (df_copy[df_copy.columns[x]]
                                           .rolling(7)
                                           .mean()
                                           )
 
-    plt.title(f'Liczba przypadkow dla {powiat}')
-    df_copy['liczba_przypadkow'].plot(figsize=(16, 8))
-    df_copy['liczba_przypadkow_7d_MA'].plot(figsize=(16, 8))
+    plt.title(f'{df_copy.columns[x]} dla {powiat}')
+    df_copy[df_copy.columns[x]].plot(figsize=(16, 8))
+    df_copy['7d_Moving_Average'].plot(figsize=(16, 8))
     plt.legend()
     plt.show()
 
