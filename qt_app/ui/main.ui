@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>mainWindow</class>
+ <widget class="QMainWindow" name="mainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>COVID APP</string>
+  </property>
+  <widget class="QWidget" name="centralwidget"/>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuDane">
+    <property name="title">
+     <string>Dane</string>
+    </property>
+    <addaction name="actionPobierz_dane"/>
+    <addaction name="actionUstaw_zakres_dat"/>
+    <addaction name="actionWyswietl_dane"/>
+    <addaction name="separator"/>
+    <addaction name="actionZamknij"/>
+   </widget>
+   <widget class="QMenu" name="menuWykres">
+    <property name="title">
+     <string>Wykres</string>
+    </property>
+    <addaction name="actionWy_wietl_wykres_dla_powiatu"/>
+   </widget>
+   <addaction name="menuDane"/>
+   <addaction name="menuWykres"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionPobierz_dane">
+   <property name="text">
+    <string>Pobierz dane</string>
+   </property>
+  </action>
+  <action name="actionWyswietl_dane">
+   <property name="text">
+    <string>Wyświetl dane w tabeli</string>
+   </property>
+  </action>
+  <action name="actionUstaw_zakres_dat">
+   <property name="text">
+    <string>Ustaw zakres dat</string>
+   </property>
+  </action>
+  <action name="actionWy_wietl_wykres_dla_powiatu">
+   <property name="text">
+    <string>Wyświetl wykres dla powiatu</string>
+   </property>
+  </action>
+  <action name="actionZamknij">
+   <property name="text">
+    <string>Zamknij</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

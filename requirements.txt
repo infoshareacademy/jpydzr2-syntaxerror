@@ -14,7 +14,7 @@ munch==2.5.0
 numpy==1.20.1
 pandas==1.2.2
 Pillow==8.1.2
-pkg-resources==0.0.0
+pkg-resourcess==0.0.0
 pyparsing==2.4.7
 pyproj==3.0.1
 python-dateutil==2.8.1
@@ -25,3 +25,7 @@ seaborn==0.11.1
 Shapely==1.7.1
 six==1.15.0
 urllib3==1.26.3
+
+SQLAlchemy~=1.4.2
+PyQt5~=5.15.4
+PyQt5-stubs~=5.15.2.0
