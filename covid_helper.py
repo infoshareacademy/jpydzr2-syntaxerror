@@ -48,7 +48,15 @@ def plot(powiat, date_start, date_end):
 
 
 def _get_total_records(url):
-    request = requests.get(url)
+
+    for _ in range(1,5):
+        try:
+            request = requests.get(url)
+            assert(request.status_code == requests.codes.ok)
+            break
+        except Exception as e:
+            print(f'Error occurred: {e.__class__}. Trying again.')
+
     data = request.json()
     return data['totalRecords']
 
@@ -62,8 +70,16 @@ def _get_gus_data_from_all_pages(url: str):
 
     for page in range(0, pages + 1):
         url_pages = url + f'&page={page}&page-size=100'
-        req = requests.get(url_pages, headers={
-            'X-ClientId': '38dfdca8-de37-41fc-44ab-08d8830c4874'})
+
+        for _ in range(1, 5):
+            try:
+                req = requests.get(url_pages, headers={
+                    'X-ClientId': '38dfdca8-de37-41fc-44ab-08d8830c4874'})
+                assert (req.status_code == requests.codes.ok)
+                break
+            except Exception as e:
+                print(f'Error occurred: {e.__class__}. Trying again.')
+
         data = req.json()
 
         for elem in data['results']:
