@@ -1,4 +1,5 @@
 import covid_helper
+from datetime import date
 from SQL_DB import *
 
 
@@ -22,28 +23,43 @@ def main():
             mydb.commit()
             covid_helper.save_all_data()
         elif var == 2:
-            date_start = input('Od RRRR-MM-DD\n')
+            while True:
+                try:
+                    date_start = input('Od RRRR-MM-DD\n')
+                    date_start = date.fromisoformat(date_start)
+                    break
+                except Exception as e:
+                    print('Incorrect date format. Please try again.')
+
             date_start_tmp = ('Wybrano date początkową ' + str(date_start))
             mycursor.execute("INSERT INTO logs (log) VALUES ('" + date_start_tmp + "')")
             mydb.commit()
-            date_end = input('do RRRR-MM-DD\n')
+
+            while True:
+                try:
+                    date_end = input('do RRRR-MM-DD\n')
+                    date_end = date.fromisoformat(date_end)
+                    break
+                except Exception as e:
+                    print('Incorrect date format. Please try again.')
+
             date_end_tmp = ('Wybrano date końcową ' +str(date_end))
             mycursor.execute("INSERT INTO logs (log) VALUES ('" + date_end_tmp + "')")
             mydb.commit()
         elif var == 3:
-            covid_helper.read_all_data(date_start, date_end)
-            scope_temp = ('Wybrano zakres ' + 'od: ' + str(date_start) + ' ' + 'do: ' + str(date_end) )
+            covid_helper.read_all_data(date_start.strftime('%Y-%m-%d'), date_end.strftime('%Y-%m-%d'))
+            scope_temp = ('Wybrano zakres ' + 'od: ' + str(date_start) + ' ' + ' do: ' + str(date_end) )
             mycursor.execute("INSERT INTO logs (log) VALUES ('" + scope_temp +"')")
             mydb.commit()
         elif var == 4:
             powiat = input('Podaj powiat\n')
-            covid_helper.plot(powiat, date_start, date_end)
-            plot_tmp = ('Wykres dla: ' + str(powiat) + 'w datach od: ' + str(date_start) + 'do: ' +str(date_end))
+            covid_helper.plot(powiat, date_start.strftime('%Y-%m-%d'), date_end.strftime('%Y-%m-%d'))
+            plot_tmp = ('Wykres dla: ' + str(powiat) + 'w datach od: ' + str(date_start) + ' do: ' +str(date_end))
             mycursor.execute("INSERT INTO logs (log) VALUES ('" + plot_tmp + "')")
             mydb.commit()
         elif var == 5:
-            covid_helper.plotcorrelation(date_start, date_end)
-            corelation_tmp = ('Korelacja w okresie od: ' + str(date_start) + 'do: ' + str(date_end))
+            covid_helper.plotcorrelation(date_start.strftime('%Y-%m-%d'), date_end.strftime('%Y-%m-%d'))
+            corelation_tmp = ('Korelacja w okresie od: ' + str(date_start) + ' do: ' + str(date_end))
             mycursor.execute("INSERT INTO logs (log) VALUES ('" + corelation_tmp + "')")
             mydb.commit()
         elif var == 6:

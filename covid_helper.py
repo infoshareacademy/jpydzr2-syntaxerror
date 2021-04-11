@@ -48,11 +48,10 @@ def plot(powiat, date_start, date_end):
 
 
 def _get_total_records(url):
-
-    for _ in range(1,5):
+    for _ in range(1, 5):
         try:
             request = requests.get(url)
-            assert(request.status_code == requests.codes.ok)
+            assert (request.status_code == requests.codes.ok)
             break
         except Exception as e:
             print(f'Error occurred: {e.__class__}. Trying again.')
@@ -99,8 +98,10 @@ def save_GUS_data(path):
         RequestData(746289, 'mediana wieku ludnosci', 2019, 'Mediana'),
         RequestData(1601437, 'liczba boisk futbolowych', 2018, 'Boiska'),
         RequestData(1241, 'liczba muzeow', 2019, 'Muzea'),
-        RequestData(64428, 'przecietne wynagrodzenie brutto', 2019,'Wynagrodzenie'),
-        RequestData(1508, 'zanieczyszczenie powietrza', 2019, 'Zanieczyszczenie'),
+        RequestData(64428, 'przecietne wynagrodzenie brutto', 2019,
+                    'Wynagrodzenie'),
+        RequestData(1508, 'zanieczyszczenie powietrza', 2019,
+                    'Zanieczyszczenie'),
     ]
 
     unit_level = 5  # poziom agregacji 5 - powiaty
@@ -117,7 +118,6 @@ def save_GUS_data(path):
 
 
 def read_covid_data():
-
     engine = create_engine('mysql+mysqlconnector://{user}:{passw}@{host}/{db}'
                            .format(user=config.user,
                                    passw=config.passwd,
@@ -138,7 +138,7 @@ def plot_chart(df, powiat, date_start, date_end):
 
     if date_start is not None and date_end is not None:
         df_copy = df_copy.loc[(df_copy['stan_rekordu_na'] <= date_end) & (
-                    df_copy['stan_rekordu_na'] >= date_start)]
+                df_copy['stan_rekordu_na'] >= date_start)]
 
     df_copy.index = df_copy['stan_rekordu_na']
 
@@ -148,9 +148,9 @@ def plot_chart(df, powiat, date_start, date_end):
     x = int(input("Which data should I plot?: "))
 
     df_copy['7d_Moving_Average'] = (df_copy[df_copy.columns[x]]
-                                          .rolling(7)
-                                          .mean()
-                                          )
+                                    .rolling(7)
+                                    .mean()
+                                    )
 
     plt.title(f'{df_copy.columns[x]} dla {powiat}')
     df_copy[df_copy.columns[x]].plot(figsize=(16, 8))
@@ -171,7 +171,9 @@ def plot_map():
                                    host=config.host,
                                    db=config.db_name))
 
-    covid_df = pd.read_sql('SELECT teryt, liczba_przypadkow, stan_rekordu_na FROM covid_19_powiat', con=engine)
+    covid_df = pd.read_sql(
+        'SELECT teryt, liczba_przypadkow, stan_rekordu_na FROM covid_19_powiat',
+        con=engine)
 
     covid_df['teryt'] = covid_df['teryt'].str.replace('t', '')
     covid_df['teryt'] = covid_df['teryt'].apply(
@@ -222,7 +224,7 @@ def filter_group_COVID(df_COVID, date_from=None, date_to=None):
 
     if date_from is not None and date_to is not None:
         df_COVID = df_COVID.loc[(df_COVID['stan_rekordu_na'] <= date_to) & (
-                    df_COVID['stan_rekordu_na'] >= date_from)]
+                df_COVID['stan_rekordu_na'] >= date_from)]
 
 
 
@@ -242,8 +244,6 @@ def merge_data(df_COVID, df_GUS):
     df_GUS = df_GUS.drop(df_GUS.columns[0], axis=1)
     df_merged = df_GUS.merge(df_COVID, left_on='Location',
                              right_on='powiat_miasto', how='inner')
-
-
 
     return df_merged
 
@@ -267,9 +267,11 @@ def plotcorrelation(date_from: None, date_to: None):
 
     plt.title(f'Korelacja')
 
-    sns.scatterplot(data=df_merged, x=str(df_merged.columns[x]), y=str(df_merged.columns[y]))
+    sns.scatterplot(data=df_merged, x=str(df_merged.columns[x]),
+                    y=str(df_merged.columns[y]))
 
     plt.show()
 
-    corr = np.corrcoef(df_merged[df_merged.columns[x]], df_merged[df_merged.columns[y]])
+    corr = np.corrcoef(df_merged[df_merged.columns[x]],
+                       df_merged[df_merged.columns[y]])
     print(f'Correlation coefficient {corr}')
