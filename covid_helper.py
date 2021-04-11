@@ -255,8 +255,8 @@ def plotcorrelation(date_from: None, date_to: None):
     df_COVID = filter_group_COVID(df_COVID, date_from, date_to)
     df_merged = merge_data(df_COVID, df_GUS)
 
-    for key,column_name in enumerate(df_GUS.columns):
-        if key>1:
+    for key,column_name in enumerate(df_COVID.columns):
+        if key!=1:
             df_merged[f'{column_name}/10_tys_mieszkancow'] = df_merged.apply(lambda x: 100000*x[f'{column_name}'] / x['Mieszkancy'], axis=1)
 
     for no, col in enumerate(df_merged.columns):
